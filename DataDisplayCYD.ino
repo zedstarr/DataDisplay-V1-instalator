@@ -1249,7 +1249,7 @@ bool isTouchInMenuItem(int y, int itemIndex) {
 }
 
 void drawSettingsIcon(uint16_t color) {
-  int ix = 300, iy = 220;
+  int ix = 300, iy = weatherRowY - 14;  // Just above the row divider, same x as before
   int rIn = 3, rMid = 6, rOut = 8;
   tft.fillCircle(ix, iy, rMid, color);
   tft.fillCircle(ix, iy, rIn, getBgColor());
@@ -2915,13 +2915,15 @@ void drawWeatherSection() {
 
   const int leftX = 5;         // Left half: current conditions
   const int rightX = 162;      // Right half: forecast + moon phase
-  const int rightW = 126;      // Stops well clear of the settings gear at (300,220)
+  const int rightW = 126;      // Leaves the top-right/bottom-right corners clear for the WiFi dot and settings gear
 
   // Vertical divider between the two halves
   tft.drawFastVLine(159, weatherRowY, 240 - weatherRowY, TFT_DARKGREY);
 
   // --- LEFT HALF: current temperature with icon ---
-  drawWeatherIconVector(weatherCode, leftX, weatherRowY + 2);
+  // Content block is ~98px tall; shifted down 14px from the divider so the
+  // 16px gap above roughly matches the gap below the sunrise/sunset row.
+  drawWeatherIconVector(weatherCode, leftX, weatherRowY + 16);
   tft.setTextDatum(TL_DATUM);
   tft.setTextColor(txtContrast, bg);
   tft.setFreeFont(&FreeSansBold18pt7b);
@@ -2929,16 +2931,16 @@ void drawWeatherSection() {
   float dispTemp = weatherUnitF ? (currentTemp * 9.0 / 5.0 + 32) : currentTemp;
   String unit = weatherUnitF ? "F" : "C";
   String tempStr = String((int)dispTemp);
-  tft.drawString(tempStr, 45, weatherRowY + 2);
+  tft.drawString(tempStr, 45, weatherRowY + 16);
 
   int tempWidth = tft.textWidth(tempStr);
-  drawDegreeCircle(45 + tempWidth + 5, weatherRowY + 7, 3, txtContrast);
-  tft.drawString(unit, 45 + tempWidth + 12, weatherRowY + 2);
+  drawDegreeCircle(45 + tempWidth + 5, weatherRowY + 21, 3, txtContrast);
+  tft.drawString(unit, 45 + tempWidth + 12, weatherRowY + 16);
 
   // Weather description: Clear, Cloudy, Rainy, etc.
   tft.setFreeFont(&FreeSans9pt7b);
   tft.setTextColor(txt, bg);
-  tft.drawString(getWeatherDesc(weatherCode), 45, weatherRowY + 34);
+  tft.drawString(getWeatherDesc(weatherCode), 45, weatherRowY + 48);
 
   // --- Today's Min/Max (right of temperature and description) ---
   {
@@ -2951,34 +2953,34 @@ void drawWeatherSection() {
     tft.setTextDatum(TL_DATUM);
     // Min label
     tft.setTextColor(txt, bg);
-    tft.setCursor(mmX, weatherRowY + 4);
+    tft.setCursor(mmX, weatherRowY + 18);
     tft.print("Min:");
     // Min value + unit
     tft.setTextColor(txtContrast, bg);
-    tft.setCursor(mmX, weatherRowY + 15);
+    tft.setCursor(mmX, weatherRowY + 29);
     tft.print(minStr);
     int minW = tft.textWidth(minStr);
-    drawDegreeCircle(mmX + minW + 2, weatherRowY + 17, 1, txtContrast);
-    tft.setCursor(mmX + minW + 6, weatherRowY + 15);
+    drawDegreeCircle(mmX + minW + 2, weatherRowY + 31, 1, txtContrast);
+    tft.setCursor(mmX + minW + 6, weatherRowY + 29);
     tft.print(unit);
     // Max label
     tft.setTextColor(txt, bg);
-    tft.setCursor(mmX, weatherRowY + 27);
+    tft.setCursor(mmX, weatherRowY + 41);
     tft.print("Max:");
     // Max value + unit
     tft.setTextColor(txtContrast, bg);
-    tft.setCursor(mmX, weatherRowY + 38);
+    tft.setCursor(mmX, weatherRowY + 52);
     tft.print(maxStr);
     int maxW = tft.textWidth(maxStr);
-    drawDegreeCircle(mmX + maxW + 2, weatherRowY + 40, 1, txtContrast);
-    tft.setCursor(mmX + maxW + 6, weatherRowY + 38);
+    drawDegreeCircle(mmX + maxW + 2, weatherRowY + 54, 1, txtContrast);
+    tft.setCursor(mmX + maxW + 6, weatherRowY + 52);
     tft.print(unit);
   }
 
   // Humidity and pressure
   tft.setFreeFont(NULL);
   tft.setTextColor(txt, bg);
-  tft.setCursor(leftX, weatherRowY + 58);
+  tft.setCursor(leftX, weatherRowY + 72);
  if (weatherUnitInHg) {
     float pressInHg = currentPressure * 0.02953f;
     tft.printf("Hum: %d%% Press: %.2f inHg", currentHumidity, pressInHg);
@@ -2987,7 +2989,7 @@ void drawWeatherSection() {
   }
 
   // Wind on the next line
-  tft.setCursor(leftX, weatherRowY + 71);
+  tft.setCursor(leftX, weatherRowY + 85);
   if (weatherUnitMph) {
   float windMph = currentWindSpeed * 0.621371;
   tft.printf("Wind: %.1f mph %s", windMph, getWindDir(currentWindDirection).c_str());
@@ -2996,26 +2998,27 @@ void drawWeatherSection() {
 }
 
   // --- SUNRISE/SUNSET ---
-  tft.drawBitmap(leftX, weatherRowY + 84, icon_sunrise, 16, 16, TFT_ORANGE);
-  tft.setCursor(leftX + 19, weatherRowY + 88);
+  tft.drawBitmap(leftX, weatherRowY + 98, icon_sunrise, 16, 16, TFT_ORANGE);
+  tft.setCursor(leftX + 19, weatherRowY + 102);
   tft.setTextColor(TFT_ORANGE, bg);
   tft.print(sunriseTime);
 
-  tft.drawBitmap(leftX + 80, weatherRowY + 84, icon_sunset, 16, 16, TFT_RED);
-  tft.setCursor(leftX + 99, weatherRowY + 88);
+  tft.drawBitmap(leftX + 80, weatherRowY + 98, icon_sunset, 16, 16, TFT_RED);
+  tft.setCursor(leftX + 99, weatherRowY + 102);
   tft.setTextColor(TFT_RED, bg);
   tft.print(sunsetTime);
 
   // --- RIGHT HALF: 3-day forecast ---
+  // Shifted down 14px to match the left half's vertical centering.
   tft.setTextColor(txt, bg);
   tft.setFreeFont(NULL);
-  tft.drawString("Forecast:", rightX, weatherRowY + 2);
+  tft.drawString("Forecast:", rightX, weatherRowY + 16);
 
   // 3 columns across the right half
   const int colW   = rightW / 3;
-  const int yName  = weatherRowY + 16;
-  const int yTemp  = weatherRowY + 28;
-  const int yIcon  = weatherRowY + 40;   // Icon ~32px tall, ends ~weatherRowY+72
+  const int yName  = weatherRowY + 30;
+  const int yTemp  = weatherRowY + 42;
+  const int yIcon  = weatherRowY + 54;   // Icon ~32px tall, ends ~weatherRowY+86
   const int iconOffX = (colW - 32) / 2;  // Center the 32px-wide icon in its column
 
   float fMin1 = weatherUnitF ? (forecast[0].tempMin * 9.0 / 5.0 + 32) : forecast[0].tempMin;
@@ -3053,7 +3056,7 @@ void drawWeatherSection() {
 
   // Separator between forecast and moon phase
   tft.setTextColor(txt, bg);
-  tft.drawFastHLine(rightX, weatherRowY + 76, rightW, TFT_DARKGREY);
+  tft.drawFastHLine(rightX, weatherRowY + 90, rightW, TFT_DARKGREY);
 
   // --- RIGHT HALF: Moon phase ---
   struct tm ti;
@@ -3063,18 +3066,19 @@ void drawWeatherSection() {
 
     tft.setTextColor(txt, bg);
     tft.setFreeFont(NULL);
-    tft.drawString("Moon Phase:", rightX, weatherRowY + 80);
+    tft.drawString("Moon Phase:", rightX, weatherRowY + 94);
 
     // Abbreviated so they fit the narrower right-half column next to the moon icon
     String phaseNames[] = {"New Moon", "Waxing Cres.", "1st Quarter", "Waxing Gibb.", "Full Moon", "Waning Gibb.", "Last Quarter", "Waning Cres."};
     if (phase >= 0 && phase <= 7) {
-      tft.drawString(phaseNames[phase], rightX, weatherRowY + 92);
+      tft.drawString(phaseNames[phase], rightX, weatherRowY + 106);
     }
 
-    // Moon icon - kept clear of the settings gear's touch zone (x>=280,y>=200)
-    int mx = 262;
-    int my = weatherRowY + 94;
-    int r = 9;
+    // Moon icon - now the settings gear has moved to the top row, this can
+    // sit further right/bigger than before without dodging its touch zone.
+    int mx = 272;
+    int my = weatherRowY + 108;
+    int r = 10;
 
     drawMoonPhaseIcon(mx, my, r, phase, txt, bg);
 
@@ -4023,17 +4027,16 @@ void loop() {
 
     switch (currentState) {
       case CLOCK: {
-        // Settings button (kept slightly narrower than the drawn gear's old
-        // hitbox so it doesn't swallow taps on the moon-phase icon next to it)
-        if (x >= 280 && x <= 320 && y >= 200 && y <= 240) {
+        // Settings button - now sits just above the row divider (same spot as
+        // the drawn gear). Checked before the format-toggle zone below since
+        // both live in the top row and would otherwise both fire on a tap here.
+        if (x >= 270 && x <= 320 && y >= 78 && y <= weatherRowY + 5) {
           currentState = SETTINGS;
           menuOffset = 0;
           drawSettingsScreen();
         }
-
-        // Touch on the clock/time to change 12/24h format
-        // Top row now spans the full width, y: 0 to weatherRowY
-        if (y <= weatherRowY) {
+        // Touch anywhere else in the top row to change 12/24h format
+        else if (y <= weatherRowY) {
            is12hFormat = !is12hFormat;
            prefs.begin("sys", false); prefs.putBool("12hFmt", is12hFormat); prefs.end();
            // Force redraw by clearing lastSec
