@@ -22,7 +22,6 @@ TFT_eSPI tft = TFT_eSPI();
 Preferences prefs;
 bool isWhiteTheme = false;  // NOW IT'S HERE, SO EVERYONE CAN SEE IT
 // ================= NEW VARIABLES FOR THE CLOCK =================
-bool isDigitalClock = false; // false = Analog, true = Digital
 bool is12hFormat = false;    // false = 24h, true = 12h
 bool invertColors = false;  // NEW VARIABLE: Color inversion for CYD boards with an inverted display
 
@@ -82,7 +81,7 @@ struct ForecastData {
   float tempMax;
   float tempMin;
 };
-ForecastData forecast[2]; 
+ForecastData forecast[3];
 float todayTempMin = 0.0;
 float todayTempMax = 0.0;
 // Variables for forecast days
@@ -524,11 +523,10 @@ long gmtOffset_sec = 3600;
 int daylightOffset_sec = 0;
 
 const int clockX = 160;
-const int clockY = 46;
-const int radius = 40;
+const int clockY = 38;
 
 // Screen split: top row (0..weatherRowY) = time/date, bottom row = weather
-const int weatherRowY = 130;
+const int weatherRowY = 110;
 int lastHour = -1, lastMin = -1, lastSec = -1, lastDay = -1;
 int brightness = 255;
 String cityName = "Plzen";
@@ -1216,9 +1214,7 @@ bool getTimezoneForCity(String countryName, String city, String &timezone, int &
 }
 
 void drawClockFace();
-void drawClockStatic();
 void drawDateAndWeek(const struct tm *ti);
-void updateHands(int h, int m, int s);
 void drawSettingsIcon(uint16_t color);
 void drawSettingsScreen();
 void drawWeatherScreen();
@@ -2135,37 +2131,6 @@ void drawGraphicsScreen() {
   tft.setTextDatum(ML_DATUM);
   tft.drawString(String(brightnessPercent) + "%", sliderX + sliderWidth + 5, sliderY + 1, 1);
 
-  // === ANALOG / DIGITAL SWITCH (Right of brightness) ===
-  int swX = 200; 
-  int swY = 115; 
-  int swW = 110; 
-  int swH = 28;
-
-  // Active element color
-  uint16_t activeColor = TFT_GREEN; 
-  if(themeMode == 2) activeColor = blueLight;
-  if(themeMode == 3) activeColor = yellowDark;
-
-  tft.drawRect(swX, swY, swW, swH, getTextColor());
-
-  if (!isDigitalClock) {
-    // State: ANALOG (active on the left)
-    tft.fillRect(swX + 2, swY + 2, (swW / 2) - 2, swH - 4, activeColor);
-    tft.setTextDatum(MC_DATUM);
-    tft.setTextColor(TFT_WHITE);
-    tft.drawString("ANA", swX + (swW / 4), swY + (swH / 2), 2);
-    tft.setTextColor(getTextColor());
-    tft.drawString("DIGI", swX + (3 * swW / 4), swY + (swH / 2), 2);
-  } else {
-    // State: DIGITAL (active on the right)
-    tft.fillRect(swX + (swW / 2), swY + 2, (swW / 2) - 2, swH - 4, activeColor);
-    tft.setTextDatum(MC_DATUM);
-    tft.setTextColor(getTextColor());
-    tft.drawString("ANA", swX + (swW / 4), swY + (swH / 2), 2);
-    tft.setTextColor(TFT_WHITE);
-    tft.drawString("DIGI", swX + (3 * swW / 4), swY + (swH / 2), 2);
-  }
-
   // === AUTO DIM SETTINGS ===
   tft.setTextDatum(ML_DATUM);
   tft.setTextColor(getTextColor());
@@ -2410,45 +2375,8 @@ void updateKeyboardText() {
   }
 }
 
-void drawClockStatic()
-{
-  if (isDigitalClock) return; // In digital mode we draw nothing
-
-  // Draw minute and hour index ticks
-  for (int i = 0; i < 60; i++) {
-    float ang = (i * 6 - 90) * DEGTORAD;
-    // Adjustment for smaller dial - shorten the ticks
-    int r1 = (i % 5 == 0) ? (radius - 6) : (radius - 3);
-    uint16_t color;
-    if (i % 5 == 0) {
-      color = getTextColor();
-    } else {
-      color = (themeMode == 3) ? 0x0010 : TFT_DARKGREY;
-    }
-    tft.drawLine(clockX + cos(ang) * radius, clockY + sin(ang) * radius, clockX + cos(ang) * r1, clockY + sin(ang) * r1, color);
-  }
-
-  // Draw numbers 1-12 (small built-in font - the dial is compact now)
-  tft.setTextColor(getTextColor());
-  tft.setTextDatum(MC_DATUM);
-  tft.setFreeFont(NULL);
-
-  for (int h = 1; h <= 12; h++) {
-    float angle = (h * 30 - 90) * DEGTORAD;
-    int x = clockX + cos(angle) * (radius - 9);
-    int y = clockY + sin(angle) * (radius - 9);
-
-    tft.drawString(String(h), x, y, 1);
-  }
-}
-
 void drawClockFace() {
   tft.fillScreen(getBgColor());
-  // In digital mode we don't draw the dial circle
-  if (!isDigitalClock) {
-    tft.drawCircle(clockX, clockY, radius + 2, getTextColor());
-    drawClockStatic();
-  }
   forceClockRedraw = true;
 }
 
@@ -2465,14 +2393,14 @@ void drawDateAndWeek(const struct tm *ti)
   tft.setTextDatum(MC_DATUM);
 
   // Compact top-row date block: full width, below the clock/time
-  tft.fillRect(0, 94, 320, 36, getBgColor());
+  tft.fillRect(0, 70, 320, 34, getBgColor());
 
   // Line 1: date + weekday combined, e.g. "July 13, 2026 - Monday"
   char dateBuf[24];
   strftime(dateBuf, sizeof(dateBuf), "%B %d, %Y", ti);
   const char *dayNames[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
   String line1 = String(dateBuf) + " - " + String(dayNames[ti->tm_wday]);
-  tft.drawString(line1, clockX, 104, 2);
+  tft.drawString(line1, clockX, 80, 2);
 
   // Line 2: city + nameday combined, e.g. "London - Nameday: Jan"
   if (cityName != "") {
@@ -2487,7 +2415,7 @@ void drawDateAndWeek(const struct tm *ti)
       line2 += " - Nameday: " + todayNameday;
     }
     tft.setTextColor(locColor, getBgColor());
-    tft.drawString(line2, clockX, 120, 2);
+    tft.drawString(line2, clockX, 96, 2);
   }
 }
 
@@ -2530,66 +2458,6 @@ void drawDigitalClock(int h, int m, int s) {
     tft.drawString(isPM ? "PM" : "AM", clockX + 112, clockY, 2);
     tft.setTextDatum(MC_DATUM);
   }
-}
-
-void updateHands(int h, int m, int s) {
-  // If digital mode is on, draw digitally
-  if (isDigitalClock) {
-    drawDigitalClock(h, m, s);
-    return;
-  }
-
-  // --- ORIGINAL ANALOG CODE ---
-  uint16_t bgColor = getBgColor();
-  uint16_t mainHandColor = getTextColor();
-  uint16_t secColor = getSecHandColor();
-
-  // CLEAR OLD HANDS (if they exist)
-  if (lastSec != -1) {
-    float hO = (lastHour % 12) + (lastMin / 60.0f);
-    hO = hO * 30 - 90;  // Convert to degrees
-    
-    float mO = lastMin * 6 - 90;
-    float sO = lastSec * 6 - 90;
-
-    // Draw old hands in background color (clear)
-    tft.drawLine(clockX, clockY,
-                 clockX + cos(hO * DEGTORAD) * (radius - 35),
-                 clockY + sin(hO * DEGTORAD) * (radius - 35),
-                 bgColor);
-    tft.drawLine(clockX, clockY,
-                 clockX + cos(mO * DEGTORAD) * (radius - 20),
-                 clockY + sin(mO * DEGTORAD) * (radius - 20),
-                 bgColor);
-    tft.drawLine(clockX, clockY,
-                 clockX + cos(sO * DEGTORAD) * (radius - 14),
-                 clockY + sin(sO * DEGTORAD) * (radius - 14),
-                 bgColor);
-    // IMPORTANT: Redraw the indices!
-    drawClockStatic();
-  }
-
-  // DRAWING NEW HANDS
-  float hA = (h % 12) + (m / 60.0f);
-  hA = hA * 30 - 90;
-  
-  float mA = m * 6 - 90;
-  float sA = s * 6 - 90;
-
-  tft.drawLine(clockX, clockY,
-               clockX + cos(hA * DEGTORAD) * (radius - 35),
-               clockY + sin(hA * DEGTORAD) * (radius - 35),
-               mainHandColor);
-  tft.drawLine(clockX, clockY,
-               clockX + cos(mA * DEGTORAD) * (radius - 20),
-               clockY + sin(mA * DEGTORAD) * (radius - 20),
-               mainHandColor);
-  tft.drawLine(clockX, clockY,
-               clockX + cos(sA * DEGTORAD) * (radius - 14),
-               clockY + sin(sA * DEGTORAD) * (radius - 14),
-               secColor);
-  // Center dot
-  tft.fillCircle(clockX, clockY, 3, TFT_LIGHTGREY);
 }
 
 String ianaToPostfixTZ(String iana) {
@@ -3636,7 +3504,6 @@ void setup() {
   prefs.begin("sys", false);
   ssid = prefs.getString("ssid", "");
   password = prefs.getString("pass", "");
-  isDigitalClock = prefs.getBool("digiClock", false);
   is12hFormat = prefs.getBool("12hFmt", false);
   
   // FIX: Load saved theme
@@ -4164,9 +4031,9 @@ void loop() {
           drawSettingsScreen();
         }
 
-        // Touch on the clock/time to change 12/24h format (DIGITAL MODE ONLY)
+        // Touch on the clock/time to change 12/24h format
         // Top row now spans the full width, y: 0 to weatherRowY
-        if (isDigitalClock && y <= weatherRowY) {
+        if (y <= weatherRowY) {
            is12hFormat = !is12hFormat;
            prefs.begin("sys", false); prefs.putBool("12hFmt", is12hFormat); prefs.end();
            // Force redraw by clearing lastSec
@@ -4916,14 +4783,6 @@ case FIRMWARE_SETTINGS: {
           analogWrite(LCD_BL_PIN, brightness); drawGraphicsScreen(); delay(100); break;
         }
 
-        // === NEW ANALOG / DIGITAL SWITCH ===
-        // Oblast: x >= 200, y cca 115-143
-        if (x >= 200 && x <= 310 && y >= 115 && y <= 145) {
-          isDigitalClock = !isDigitalClock;
-          prefs.begin("sys", false); prefs.putBool("digiClock", isDigitalClock); prefs.end();
-          drawGraphicsScreen(); delay(200); break;
-        }
-
         // BACK button
         if (x >= 252 && x <= 308 && y >= 182 && y <= 238) {
           currentState = SETTINGS;
@@ -5010,7 +4869,6 @@ case FIRMWARE_SETTINGS: {
           // -------------------------
 
           drawClockFace();
-          drawClockStatic();
           if (lastWeatherUpdate == 0 && cityName != "") {
             weatherCity = cityName;
             fetchWeatherData();
@@ -5025,7 +4883,7 @@ case FIRMWARE_SETTINGS: {
           drawUpdateIndicator();
         }
 
-        updateHands(ti.tm_hour, ti.tm_min, ti.tm_sec);
+        drawDigitalClock(ti.tm_hour, ti.tm_min, ti.tm_sec);
         lastHour = ti.tm_hour; lastMin = ti.tm_min; lastSec = ti.tm_sec;
       }
       
