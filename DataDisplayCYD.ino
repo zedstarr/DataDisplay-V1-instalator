@@ -2914,8 +2914,8 @@ void drawWeatherSection() {
   }
 
   const int leftX = 5;         // Left half: current conditions
-  const int rightX = 162;      // Right half: forecast + moon phase
-  const int rightW = 126;      // Leaves the top-right/bottom-right corners clear for the WiFi dot and settings gear
+  const int rightX = 165;      // Right half: forecast + moon phase
+  const int rightW = 150;      // Now that the gear moved to the top row, this can use the full width up to the screen edge
 
   // Vertical divider between the two halves
   tft.drawFastVLine(159, weatherRowY, 240 - weatherRowY, TFT_DARKGREY);
@@ -3074,9 +3074,10 @@ void drawWeatherSection() {
       tft.drawString(phaseNames[phase], rightX, weatherRowY + 106);
     }
 
-    // Moon icon - now the settings gear has moved to the top row, this can
-    // sit further right/bigger than before without dodging its touch zone.
-    int mx = 272;
+    // Moon icon - pushed out to the right edge (mirrors how the min/max
+    // block hugs the right edge of the left half) so the row fills the
+    // quadrant edge-to-edge instead of clustering near the divider.
+    int mx = 300;
     int my = weatherRowY + 108;
     int r = 10;
 
