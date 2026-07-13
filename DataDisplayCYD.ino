@@ -2948,7 +2948,7 @@ void drawWeatherSection() {
     float todayMaxDisp = weatherUnitF ? (todayTempMax * 9.0 / 5.0 + 32) : todayTempMax;
     String minStr = String((int)todayMinDisp);
     String maxStr = String((int)todayMaxDisp);
-    const int mmX = 120;
+    const int mmX = 124;
     tft.setFreeFont(NULL);
     tft.setTextDatum(TL_DATUM);
     // Min label
